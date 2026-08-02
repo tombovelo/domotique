@@ -77,7 +77,7 @@ export default function RoomsListScreen() {
               <RoomRow
                 key={room.id}
                 room={room}
-                onPress={() => router.push(`/(admin)/rooms/${room.id}`)}
+                onPress={() => router.push({ pathname: '/(admin)/rooms/[id]', params: { id: room.id } })}
                 onDelete={() => handleDelete(room.id)}
               />
             ))}
