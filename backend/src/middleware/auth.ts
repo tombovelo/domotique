@@ -98,6 +98,8 @@ export const checkRoomAccess = async (
   });
   if (!user) return false;
 
+  if (user.role === 'ADMIN') return true;
+
   const room = await prisma.room.findUnique({ where: { id: roomId } });
   if (!room) return false;
 
