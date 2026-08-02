@@ -20,7 +20,7 @@ export default function RootLayout() {
   return (
     <>
       <StatusBar style={isDark ? 'light' : 'dark'} />
-      <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
+      <Stack screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: theme.bg } }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="(admin)" />
         <Stack.Screen name="(membre)" />

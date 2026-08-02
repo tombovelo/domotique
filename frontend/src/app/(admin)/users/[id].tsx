@@ -118,16 +118,15 @@ export default function UserDetailScreen() {
         </Text>
       </View>
 
-      <View
-        style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.surfaceBorder, padding: rs(16), gap: rs(10), borderRadius: rs(22), marginHorizontal: pagePadding, marginTop: rs(12), maxWidth: contentMaxWidth, alignSelf: 'center', width: '100%' as any, flex: 1 }]}>
-        <Text style={[styles.sectionTitle, { color: theme.text, fontSize: rf(15) }]}>
-          Pièces autorisées
-        </Text>
-        <Text style={[styles.sectionSub, { color: theme.textMuted, fontSize: rf(11) }]}>
-          {isAdmin ? "L'administrateur a accès à toutes les pièces" : 'Activez ou désactivez l\'accès aux pièces'}
-        </Text>
-
-        {!isAdmin && (
+      {!isAdmin && (
+        <View
+          style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.surfaceBorder, padding: rs(16), gap: rs(10), borderRadius: rs(22), marginHorizontal: pagePadding, marginTop: rs(12), maxWidth: contentMaxWidth, alignSelf: 'center', width: '100%' as any, flex: 1 }]}>
+          <Text style={[styles.sectionTitle, { color: theme.text, fontSize: rf(15) }]}>
+            Pièces autorisées
+          </Text>
+          <Text style={[styles.sectionSub, { color: theme.textMuted, fontSize: rf(11) }]}>
+            Activez ou désactivez l\'accès aux pièces
+          </Text>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.permsGrid, { gap: rs(8), paddingBottom: rs(8) }]}>
             {allRooms.map((room) => {
               const perm = permissions.find((p) => p.room.id === room.id);
@@ -144,8 +143,8 @@ export default function UserDetailScreen() {
               );
             })}
           </ScrollView>
-        )}
-      </View>
+        </View>
+      )}
 
       <View style={{ paddingHorizontal: pagePadding, paddingBottom: insets.bottom + rs(90), paddingTop: rs(12), gap: rs(10), maxWidth: contentMaxWidth, alignSelf: 'center', width: '100%' as any }}>
         {!isAdmin && (
