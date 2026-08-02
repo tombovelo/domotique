@@ -34,6 +34,7 @@ export default function AdminTabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        sceneStyle: { backgroundColor: theme.bg },
         tabBarStyle: {
           position: 'absolute',
           bottom: 0,

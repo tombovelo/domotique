@@ -38,6 +38,7 @@ export default function MembreTabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        sceneStyle: { backgroundColor: theme.bg },
         tabBarStyle: {
           position: 'absolute',
           bottom: 0,
