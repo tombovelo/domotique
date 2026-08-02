@@ -1,0 +1,209 @@
+========================================
+  API DOMOTIQUE - Documentation
+  Base URL : http://localhost:3000
+========================================
+
+Le codeAcces sert de mot de passe (login = codeAcces seul).
+Le token JWT (accessToken) est retourné par le login et doit être envoyé
+dans le header Authorization : Bearer <TOKEN> pour les routes protégées.
+
+----------------------------------------
+1. HEALTH
+----------------------------------------
+
+GET /health
+  Auth: Aucune
+  Body: -
+  Réponse: { "status": "ok", "timestamp": "..." }
+
+----------------------------------------
+2. AUTH - /api/auth
+----------------------------------------
+
+POST /api/auth/login
+  Auth: Aucune
+  Body: { "codeAcces": "1234" }
+  Réponse: { "user": { "id", "nom", "codeAcces", "role" }, "accessToken", "refreshToken" }
+
+POST /api/auth/register
+  Auth: Bearer token (connecté)
+  Body: { "nom": "string", "codeAcces": "string (4-10)", "role": "ADMIN"|"MEMBRE" (défaut: MEMBRE) }
+  Réponse: { "id", "nom", "codeAcces", "role" }
+
+POST /api/auth/refresh
+  Auth: Cookie refreshToken
+  Body: -
+  Réponse: { "accessToken", "refreshToken" }
+
+POST /api/auth/logout
+  Auth: Cookie refreshToken
+  Body: -
+  Réponse: { "message": "Déconnecté" }
+
+GET /api/auth/me
+  Auth: Bearer token
+  Body: -
+  Réponse: { "id", "nom", "codeAcces", "role", "isActive", "permissions": [{ "id", "userId", "acces", "createdAt", "room": { "id", "nom", "icone", "type", "pinRelais", "pinInterrupteur", "etat", "createdAt", "updatedAt" } }] }
+
+GET /api/auth/verify
+  Auth: Optionnel (Bearer token)
+  Body: -
+  Réponse: { "authenticated": true, "user": {...} } ou { "authenticated": false }
+
+PATCH /api/auth/me/code
+  Auth: Bearer token
+  Body: { "newCode": "string (4-10)" }
+  Réponse: { "id", "nom", "codeAcces", "role" }
+
+----------------------------------------
+3. ROOMS - /api/rooms
+----------------------------------------
+
+GET /api/rooms
+  Auth: Bearer token
+  Body: -
+  Réponse: [{ "id", "nom", "icone", "type", "pinRelais", "pinInterrupteur", "etat", "createdAt", "updatedAt" }]
+
+GET /api/rooms/accessible
+  Auth: Bearer token
+  Body: -
+  Description: ADMIN voit toutes les pièces. MEMBRE voit les COMMUNES + celles avec permission.
+  Réponse: [{ "id", "nom", "icone", "type", "pinRelais", "pinInterrupteur", "etat", "createdAt", "updatedAt" }]
+
+GET /api/rooms/:id
+  Auth: Bearer token
+  Body: -
+  Réponse: { "id", "nom", "icone", "type", "pinRelais", "pinInterrupteur", "etat", "createdAt", "updatedAt", "gpioDevices": [...] }
+
+POST /api/rooms
+  Auth: Bearer token ADMIN
+  Body: { "nom": "string", "type": "COMMUNE"|"PRIVEE", "pinRelais": number, "pinInterrupteur": number, "icone": "string" (défaut: "💡") }
+  Réponse: { "id", "nom", "icone", "type", "pinRelais", "pinInterrupteur", "etat", "createdAt", "updatedAt" }
+
+PATCH /api/rooms/:id
+  Auth: Bearer token ADMIN
+  Body: (champs partiels) { "nom"?, "icone"?, "type"?, "pinRelais"?, "pinInterrupteur"? }
+  Réponse: { "id", "nom", "icone", "type", "pinRelais", "pinInterrupteur", "etat", "createdAt", "updatedAt" }
+
+PATCH /api/rooms/:id/toggle
+  Auth: Bearer token
+  Body: { "etat": true|false }
+  Réponse: { "id", "nom", "icone", "type", "pinRelais", "pinInterrupteur", "etat", "createdAt", "updatedAt" }
+
+DELETE /api/rooms/:id
+  Auth: Bearer token ADMIN
+  Body: -
+  Réponse: { "message": "Supprimé" }
+
+----------------------------------------
+4. USERS - /api/users (Admin uniquement)
+----------------------------------------
+
+GET /api/users
+  Auth: Bearer token ADMIN
+  Body: -
+  Réponse: [{ "id", "nom", "codeAcces", "role", "isActive", "dateExpiration", "dateCreation", "permissions": [{ "id", "userId", "acces", "createdAt", "room": { "id", "nom", "icone", "type", "pinRelais", "pinInterrupteur", "etat", "createdAt", "updatedAt" } }] }]
+
+GET /api/users/:id
+  Auth: Bearer token ADMIN
+  Body: -
+  Réponse: même format que GET /api/users mais un seul utilisateur
+
+POST /api/users
+  Auth: Bearer token ADMIN
+  Body: {
+    "nom": "string",
+    "codeAcces": "string (4-10)",
+    "role": "ADMIN"|"MEMBRE" (défaut: MEMBRE),
+    "dateExpiration": "ISO datetime" (nullable, optionnel),
+    "permissions": [{ "roomId": number, "acces": boolean }] (défaut: [])
+  }
+  Réponse: { "id", "nom", "codeAcces", "role", "isActive", "permissions": [...] }
+
+PATCH /api/users/:id
+  Auth: Bearer token ADMIN
+  Body: (champs partiels) {
+    "nom"?: "string",
+    "codeAcces"?: "string (4-10)",
+    "role"?: "ADMIN"|"MEMBRE",
+    "isActive"?: boolean,
+    "dateExpiration"?: "ISO datetime"|null,
+    "permissions"?: [{ "roomId": number, "acces": boolean }]
+  }
+  Description: Si codeAcces changé, le passwordHash est automatiquement recalculé.
+  Réponse: { "id", "nom", "codeAcces", "role", "isActive", "permissions": [...] }
+
+DELETE /api/users/:id
+  Auth: Bearer token ADMIN
+  Body: -
+  Description: L'admin principal (id=1) est protégé, ne peut pas être supprimé.
+  Réponse: { "message": "Supprimé" }
+
+----------------------------------------
+5. GPIO - /api/gpio
+----------------------------------------
+
+GET /api/gpio
+  Auth: Bearer token
+  Body: -
+  Réponse: [{ "id", "pin", "type", "nom", "actif", "etat", "roomId", "createdAt", "updatedAt", "room": { "id", "nom" } }]
+
+POST /api/gpio
+  Auth: Bearer token ADMIN
+  Body: {
+    "pin": number (1-40),
+    "type": "RELAIS"|"INTERRUPTEUR"|"CAPTEUR",
+    "nom": "string",
+    "roomId": number|null (optionnel),
+    "actif": boolean (défaut: true)
+  }
+  Réponse: { "id", "pin", "type", "nom", "actif", "etat", "roomId", "createdAt", "updatedAt", "room": { "id", "nom" } }
+
+PATCH /api/gpio/:id
+  Auth: Bearer token ADMIN
+  Body: (champs partiels) { "pin"?, "type"?, "nom"?, "roomId"?, "actif"? }
+  Réponse: même format que POST
+
+POST /api/gpio/:id/toggle
+  Auth: Bearer token
+  Body: -
+  Réponse: { "id", "pin", "type", "nom", "actif", "etat", "roomId", "createdAt", "updatedAt", "room": { "id", "nom" } }
+
+DELETE /api/gpio/:id
+  Auth: Bearer token ADMIN
+  Body: -
+  Réponse: { "message": "Supprimé" }
+
+----------------------------------------
+6. SOCKET.IO - Événements temps réel
+----------------------------------------
+
+Connexion: auth via token
+  socket.handshake.auth.token = <accessToken>
+
+Événements émis par le client:
+  "room:toggle"      -> { "roomId": number, "etat": boolean }
+  "room:subscribe"   -> roomId (number)
+  "room:unsubscribe" -> roomId (number)
+  "join:room"        -> roomId (number)
+  "join:user"        -> userId (number)
+  "subscribe:rooms"  -> (aucun param)
+  "subscribe:gpio"   -> (aucun param)
+
+Événements reçus par le client:
+  "room:stateChanged" -> { "roomId": number, "etat": boolean }
+  "gpio:updated"      -> objet GPIO device complet
+  "error"             -> { "message": "string" }
+
+----------------------------------------
+WORKFLOW POSTMAN RAPIDE
+----------------------------------------
+
+1. POST /api/auth/login
+   Body: { "codeAcces": "1234" }
+   → Copier accessToken
+
+2. Dans Postman > Onglet Authorization > Type: Bearer Token
+   Coller le token
+
+3. Tester les autres routes librement.

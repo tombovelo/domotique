@@ -1,0 +1,26 @@
+# Dependencies (frontend + backend)
+node_modules/
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native (android/ est dans frontend/)
+android/
+ios/
+
+# Builds & caches
+*.tsbuildinfo
+.DS_Store
+.claude/
+.vscode/

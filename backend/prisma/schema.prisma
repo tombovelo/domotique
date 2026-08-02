@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MEMBRE
+}
+
+enum RoomType {
+  COMMUNE
+  PRIVEE
+}
+
+enum GpioType {
+  RELAIS
+  INTERRUPTEUR
+  CAPTEUR
+}
+
+enum ActionType {
+  ALLUMAGE
+  EXTINCTION
+  CONNEXION
+  DECONNEXION
+  MODIFICATION
+  CREATION
+  SUPPRESSION
+}
+
+model User {
+  id              Int                @id @default(autoincrement())
+  nom             String
+  codeAcces       String             @unique
+  passwordHash    String
+  role            Role               @default(MEMBRE)
+  dateCreation    DateTime           @default(now())
+  dateExpiration  DateTime?
+  isActive        Boolean            @default(true)
+  permissions     PiecePermission[]
+  refreshTokens   RefreshToken[]
+  actionLogs      ActionLog[]
+  createdRooms    Room[]             @relation("RoomCreator")
+  updatedRooms    Room[]             @relation("RoomUpdater")
+
+  @@map("users")
+}
+
+model Room {
+  id               Int            @id @default(autoincrement())
+  nom              String
+  icone            String         @default("💡")
+  type             RoomType       @default(PRIVEE)
+  pinRelais        Int            @unique
+  pinInterrupteur  Int            @unique
+  etat             Boolean        @default(false)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  permissions      PiecePermission[]
+  gpioDevices      GpioDevice[]
+  creator          User?          @relation("RoomCreator", fields: [createdById], references: [id])
+  createdById      Int?
+  updater          User?          @relation("RoomUpdater", fields: [updatedById], references: [id])
+  updatedById      Int?
+
+  @@map("rooms")
+}
+
+model PiecePermission {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roomId    Int
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  acces     Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, roomId])
+  @@map("piece_permissions")
+}
+
+model GpioDevice {
+  id        Int        @id @default(autoincrement())
+  pin       Int        @unique
+  type      GpioType
+  nom       String
+  actif     Boolean    @default(true)
+  etat      Boolean    @default(false)
+  roomId    Int?
+  room      Room?      @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@map("gpio_devices")
+}
+
+model ActionLog {
+  id        Int        @id @default(autoincrement())
+  type      ActionType
+  roomId    Int?
+  userId    Int
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userNom   String
+  details   String?
+  createdAt DateTime   @default(now())
+
+  @@map("action_logs")
+}
+
+model RefreshToken {
+  id        Int       @id @default(autoincrement())
+  token     String    @unique
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@map("refresh_tokens")
+}
